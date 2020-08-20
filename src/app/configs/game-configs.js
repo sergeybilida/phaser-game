@@ -52,3 +52,10 @@ export const RESULTS_TEXT = {
   FONT_SIZE: '54px'
 };
 
+export const PREVIEW_TEXT = {
+  X: 30,
+  Y: 300,
+  COLOR: '#000',
+  FONT_SIZE: '24px'
+};
+

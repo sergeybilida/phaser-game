@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 
 import GameObjectsBuilder from '../builders/game-objects-builder';
-import {BALLS, RESULTS_TEXT, SCENE, SIDES} from '../configs/game-configs';
+import {BALLS, PREVIEW_TEXT, RESULTS_TEXT, SCENE, SIDES} from '../configs/game-configs';
 import touchCounterFactory from '../counter/touch-counter';
 import GAME_OBJECT_NAMES from './../constants/game-object-names';
+
+const INTRO_TEXT = 'Press "up" key or touch screen';
 
 export default class PhaserGameScene extends Phaser.Scene {
 
@@ -12,6 +14,7 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.balls = undefined;
     this.isRunningGame = false;
     this.catchedBalls = touchCounterFactory();
+    this.previewText = undefined;
   }
 
   preload() {
@@ -26,15 +29,16 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.balls = gameObjectsBuilder.createBalls();
     gameObjectsBuilder.createSides(this.balls, (side, counter) => this.handleCollidingBallWithSide(side, counter));
     const baskets = gameObjectsBuilder.createBaskets();
-
     this.physics.add.collider(this.balls, this.balls);
     this.physics.add.overlap(this.balls, baskets, ball => this.handleCollidingBallWithBasket(ball), null, this);
+    this.previewText = this.addPreviewText();
   }
 
   update() {
     const cursors = this.input.keyboard.createCursorKeys();
-    if (cursors.up.isDown || this.input.pointer1.isDown) {
+    if (!this.isRunningGame && (cursors.up.isDown || this.input.pointer1.isDown)) {
       this.pushBalls();
+      this.hidePreviewText();
       this.isRunningGame = true;
     }
     this.handleGoingOutOfBounds();
@@ -66,10 +70,8 @@ export default class PhaserGameScene extends Phaser.Scene {
   pushBalls() {
     this.balls.children.iterate(ball => {
         ball.setBounce(BALLS.BOUNCE.ACTIVE);
-        if (!this.isRunningGame) {
-          ball.setVelocity(Phaser.Math.Between(BALLS.VELOCITY.X.FROM, BALLS.VELOCITY.X.TO),
-            Phaser.Math.Between(BALLS.VELOCITY.Y.FROM, BALLS.VELOCITY.Y.TO));
-        }
+        ball.setVelocity(Phaser.Math.Between(BALLS.VELOCITY.X.FROM, BALLS.VELOCITY.X.TO),
+          Phaser.Math.Between(BALLS.VELOCITY.Y.FROM, BALLS.VELOCITY.Y.TO));
       }
     );
   }
@@ -83,5 +85,16 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.add.text(RESULTS_TEXT.X, RESULTS_TEXT.Y, `Score: ${this.catchedBalls.get()}`, {
       fontSize: RESULTS_TEXT.FONT_SIZE, fill: RESULTS_TEXT.COLOR
     });
+  }
+
+  addPreviewText() {
+    return this.add.text(PREVIEW_TEXT.X, PREVIEW_TEXT.Y, INTRO_TEXT, {
+      fontSize: PREVIEW_TEXT.FONT_SIZE,
+      fill: PREVIEW_TEXT.COLOR
+    });
+  }
+
+  hidePreviewText() {
+    this.previewText.setVisible(false);
   }
 }
