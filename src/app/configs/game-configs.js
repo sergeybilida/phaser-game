@@ -46,10 +46,12 @@ export const SIDES = {
 };
 
 export const RESULTS_TEXT = {
-  X: 100,
+  X: 120,
   Y: 300,
   COLOR: '#000',
-  FONT_SIZE: '54px'
+  FONT_SIZE: '32px',
+  ALIGN: 'center',
+  WIDTH: 300
 };
 
 export const PREVIEW_TEXT = {

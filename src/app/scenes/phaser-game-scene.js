@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
 
 import GameObjectsBuilder from '../builders/game-objects-builder';
-import {BALLS, PREVIEW_TEXT, RESULTS_TEXT, SCENE, SIDES} from '../configs/game-configs';
+import {BALLS, PREVIEW_TEXT as PREVIEW_TEXT_CONFIG, RESULTS_TEXT, SCENE, SIDES} from '../configs/game-configs';
 import touchCounterFactory from '../counter/touch-counter';
 import GAME_OBJECT_NAMES from './../constants/game-object-names';
 
-const INTRO_TEXT = 'Put your finger on a blue ball and swipe';
+const PREVIEW_TEXT = 'Put your finger on a blue ball and swipe';
 
 export default class PhaserGameScene extends Phaser.Scene {
 
@@ -13,6 +13,7 @@ export default class PhaserGameScene extends Phaser.Scene {
     super('phaser-scene');
     this.balls = undefined;
     this.isRunningGame = false;
+    this.isGameOver = false;
     this.catchedBalls = touchCounterFactory();
     this.previewText = undefined;
     this.downX = null;
@@ -33,14 +34,16 @@ export default class PhaserGameScene extends Phaser.Scene {
     const baskets = gameObjectsBuilder.createBaskets();
     this.physics.add.collider(this.balls, this.balls);
     this.physics.add.overlap(this.balls, baskets, ball => this.handleCollidingBallWithBasket(ball), null, this);
-    this.previewText = this.addPreviewText();
-    this.addListenersOnBallsSwiping(pointer => this.handleDownEvent(pointer), pointer => this.handleUpEvent(pointer));
+    this.previewText = this.showText(PREVIEW_TEXT, PREVIEW_TEXT_CONFIG);
+    this.addListenersOnBallsSwiping(pointer => this.handleDownEvent(pointer));
+    this.addResetGameListener();
   }
 
   update() {
     this.handleGoingOutOfBounds();
     if (!this.balls.countActive(true)) {
-      this.showResults();
+      this.showText(this.getResultText(), RESULTS_TEXT);
+      this.isGameOver = true;
     }
   }
 
@@ -80,19 +83,13 @@ export default class PhaserGameScene extends Phaser.Scene {
     return y < 0 || x < 0 || x > SCENE.WIDTH || y > SCENE.HEIGHT;
   }
 
-  showResults() {
-    this.add.text(RESULTS_TEXT.X, RESULTS_TEXT.Y, `Score: ${this.catchedBalls.get()}`, {
-      fontSize: RESULTS_TEXT.FONT_SIZE, fill: RESULTS_TEXT.COLOR
-    });
-  }
-
-  addPreviewText() {
-    return this.add.text(PREVIEW_TEXT.X, PREVIEW_TEXT.Y, INTRO_TEXT, {
-      fontSize: PREVIEW_TEXT.FONT_SIZE,
-      fill: PREVIEW_TEXT.COLOR,
-      align: PREVIEW_TEXT.ALIGN,
+  showText(text, config) {
+    return this.add.text(config.X, config.Y, text, {
+      fontSize: config.FONT_SIZE,
+      fill: config.COLOR,
+      align: config.ALIGN,
       wordWrap: {
-        width: PREVIEW_TEXT.WIDTH
+        width: config.WIDTH
       }
     });
   }
@@ -114,20 +111,38 @@ export default class PhaserGameScene extends Phaser.Scene {
     }
   }
 
-  addListenersOnBallsSwiping(downEventListener, upEventListener) {
-    this.balls.children.iterate(ball => ball.on('pointerdown', downEventListener));
-    this.input.on('pointerup', upEventListener);
+  addListenersOnBallsSwiping(downEventListener) {
+    this.balls.children.iterate(ball => ball.once('pointerdown', downEventListener));
   }
 
   handleDownEvent({x, y}) {
     this.downX = x;
     this.downY = y;
-    this.hidePreviewText();
-    this.isRunningGame = true;
+    this.input.once('pointerup', pointer => this.startGame(pointer));
   }
 
-  handleUpEvent({x, y}) {
-    this.downX && this.downY && this.pushBalls(this.downX, this.downY, x, y);
+  startGame({x, y}) {
+    if (this.downX && this.downY) {
+      this.pushBalls(this.downX, this.downY, x, y);
+      this.hidePreviewText();
+      this.isRunningGame = true;
+    }
   }
 
+  addResetGameListener() {
+    this.input.addListener('pointerup', () => {
+      if (this.isGameOver) {
+        this.scene.restart()
+        this.isRunningGame = false;
+        this.isGameOver = false;
+        this.catchedBalls.reset();
+        this.downY = null;
+        this.downX = null;
+      }
+    });
+  }
+
+  getResultText() {
+    return `Score: ${this.catchedBalls.get()}.\n Touch screen to continue`;
+  }
 }
