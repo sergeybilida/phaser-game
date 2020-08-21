@@ -5,7 +5,7 @@ import {BALLS, PREVIEW_TEXT, RESULTS_TEXT, SCENE, SIDES} from '../configs/game-c
 import touchCounterFactory from '../counter/touch-counter';
 import GAME_OBJECT_NAMES from './../constants/game-object-names';
 
-const INTRO_TEXT = 'Press "up" key or touch screen';
+const INTRO_TEXT = 'Put your finger on a blue ball and swipe';
 
 export default class PhaserGameScene extends Phaser.Scene {
 
@@ -15,6 +15,8 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.isRunningGame = false;
     this.catchedBalls = touchCounterFactory();
     this.previewText = undefined;
+    this.downX = null;
+    this.downY = null;
   }
 
   preload() {
@@ -32,15 +34,10 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.physics.add.collider(this.balls, this.balls);
     this.physics.add.overlap(this.balls, baskets, ball => this.handleCollidingBallWithBasket(ball), null, this);
     this.previewText = this.addPreviewText();
+    this.addListenersOnBallsSwiping(pointer => this.handleDownEvent(pointer), pointer => this.handleUpEvent(pointer));
   }
 
   update() {
-    const cursors = this.input.keyboard.createCursorKeys();
-    if (!this.isRunningGame && (cursors.up.isDown || this.input.pointer1.isDown)) {
-      this.pushBalls();
-      this.hidePreviewText();
-      this.isRunningGame = true;
-    }
     this.handleGoingOutOfBounds();
     if (!this.balls.countActive(true)) {
       this.showResults();
@@ -67,11 +64,13 @@ export default class PhaserGameScene extends Phaser.Scene {
     });
   }
 
-  pushBalls() {
+  pushBalls(downX, downY, upX, upY) {
+    const velocityRange = this.calculateBallVelocity(upX - downX, upY - downY);
     this.balls.children.iterate(ball => {
+      const velocityX = Phaser.Math.Between(velocityRange.x.from , velocityRange.x.to);
+      const velocityY = Phaser.Math.Between(velocityRange.y.from , velocityRange.y.to);
         ball.setBounce(BALLS.BOUNCE.ACTIVE);
-        ball.setVelocity(Phaser.Math.Between(BALLS.VELOCITY.X.FROM, BALLS.VELOCITY.X.TO),
-          Phaser.Math.Between(BALLS.VELOCITY.Y.FROM, BALLS.VELOCITY.Y.TO));
+        ball.setVelocity(velocityX, velocityY);
       }
     );
   }
@@ -90,11 +89,45 @@ export default class PhaserGameScene extends Phaser.Scene {
   addPreviewText() {
     return this.add.text(PREVIEW_TEXT.X, PREVIEW_TEXT.Y, INTRO_TEXT, {
       fontSize: PREVIEW_TEXT.FONT_SIZE,
-      fill: PREVIEW_TEXT.COLOR
+      fill: PREVIEW_TEXT.COLOR,
+      align: PREVIEW_TEXT.ALIGN,
+      wordWrap: {
+        width: PREVIEW_TEXT.WIDTH
+      }
     });
   }
 
   hidePreviewText() {
     this.previewText.setVisible(false);
   }
+
+  calculateBallVelocity(diffX, diffY) {
+    return {
+      x: {
+        from: diffX * BALLS.VELOCITY_BOOST.X.FROM,
+        to: diffX * BALLS.VELOCITY_BOOST.X.TO
+      },
+      y: {
+        from: diffY * BALLS.VELOCITY_BOOST.Y.FROM,
+        to: diffY * BALLS.VELOCITY_BOOST.Y.TO
+      }
+    }
+  }
+
+  addListenersOnBallsSwiping(downEventListener, upEventListener) {
+    this.balls.children.iterate(ball => ball.on('pointerdown', downEventListener));
+    this.input.on('pointerup', upEventListener);
+  }
+
+  handleDownEvent({x, y}) {
+    this.downX = x;
+    this.downY = y;
+    this.hidePreviewText();
+    this.isRunningGame = true;
+  }
+
+  handleUpEvent({x, y}) {
+    this.downX && this.downY && this.pushBalls(this.downX, this.downY, x, y);
+  }
+
 }

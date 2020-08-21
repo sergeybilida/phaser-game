@@ -13,14 +13,14 @@ export const BALLS = {
     DEFAULT: 0.9,
     ACTIVE: 1.4
   },
-  VELOCITY: {
+  VELOCITY_BOOST: {
     X: {
-      FROM: -250,
-      TO: 250
+      FROM: 3,
+      TO: 4
     },
     Y: {
-      FROM: -400,
-      TO: -500
+      FROM: 3,
+      TO: 4
     }
   },
   START_POSITION: {
@@ -53,9 +53,11 @@ export const RESULTS_TEXT = {
 };
 
 export const PREVIEW_TEXT = {
-  X: 30,
+  X: 60,
   Y: 300,
   COLOR: '#000',
-  FONT_SIZE: '24px'
+  FONT_SIZE: '24px',
+  ALIGN: 'center',
+  WIDTH: 400
 };
 
