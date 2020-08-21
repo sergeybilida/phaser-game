@@ -27,7 +27,10 @@ export default class GameObjectsBuilder {
       x: BALLS.START_POSITION.X,
       y: BALLS.START_POSITION.Y
     });
-    balls.children.iterate(ball => ball.setBounce(BALLS.BOUNCE.DEFAULT));
+    balls.children.iterate(ball => {
+      ball.setBounce(BALLS.BOUNCE.DEFAULT);
+      ball.setInteractive();
+    });
     return balls;
   }
 
