@@ -70,12 +70,11 @@ export default class PhaserGameScene extends Phaser.Scene {
   pushBalls(downX, downY, upX, upY) {
     const velocityRange = this.calculateBallVelocity(upX - downX, upY - downY);
     this.balls.children.iterate(ball => {
-      const velocityX = Phaser.Math.Between(velocityRange.x.from , velocityRange.x.to);
-      const velocityY = Phaser.Math.Between(velocityRange.y.from , velocityRange.y.to);
-        ball.setBounce(BALLS.BOUNCE.ACTIVE);
-        ball.setVelocity(velocityX, velocityY);
-      }
-    );
+      const velocityX = Phaser.Math.Between(velocityRange.x.from, velocityRange.x.to);
+      const velocityY = Phaser.Math.Between(velocityRange.y.from, velocityRange.y.to);
+      ball.setBounce(BALLS.BOUNCE.ACTIVE);
+      ball.setVelocity(velocityX, velocityY);
+    });
   }
 
   isBallOutsideOfScene(ball) {
@@ -101,14 +100,14 @@ export default class PhaserGameScene extends Phaser.Scene {
   calculateBallVelocity(diffX, diffY) {
     return {
       x: {
-        from: diffX * BALLS.VELOCITY_BOOST.X.FROM,
-        to: diffX * BALLS.VELOCITY_BOOST.X.TO
+        from: diffX <= 0 ? diffX - BALLS.VELOCITY.ERROR_X : diffX,
+        to: diffX <= 0 ? diffX : diffX + BALLS.VELOCITY.ERROR_X
       },
       y: {
-        from: diffY * BALLS.VELOCITY_BOOST.Y.FROM,
-        to: diffY * BALLS.VELOCITY_BOOST.Y.TO
+        from: Math.max(diffY * BALLS.VELOCITY.BOOST.Y.FROM, BALLS.VELOCITY.MAX_Y),
+        to: Math.max(diffY * BALLS.VELOCITY.BOOST.Y.TO, BALLS.VELOCITY.MAX_Y)
       }
-    }
+    };
   }
 
   addListenersOnBallsSwiping(downEventListener) {
@@ -132,7 +131,7 @@ export default class PhaserGameScene extends Phaser.Scene {
   addResetGameListener() {
     this.input.addListener('pointerup', () => {
       if (this.isGameOver) {
-        this.scene.restart()
+        this.scene.restart();
         this.isRunningGame = false;
         this.isGameOver = false;
         this.catchedBalls.reset();

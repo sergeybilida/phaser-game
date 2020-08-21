@@ -9,18 +9,24 @@ export const SCENE = {
 
 export const BALLS = {
   COUNT: 20,
+  HIT_AREA: {
+    X: -8,
+    Y: -8,
+    WIDTH: 24,
+    HEIGHT: 24
+  },
   BOUNCE: {
     DEFAULT: 0.9,
     ACTIVE: 1.4
   },
-  VELOCITY_BOOST: {
-    X: {
-      FROM: 3,
-      TO: 4
-    },
-    Y: {
-      FROM: 3,
-      TO: 4
+  VELOCITY: {
+    ERROR_X: 150,
+    MAX_Y:  -550,
+    BOOST: {
+      Y: {
+        FROM: 3,
+        TO: 4
+      }
     }
   },
   START_POSITION: {

@@ -30,6 +30,7 @@ export default class GameObjectsBuilder {
     balls.children.iterate(ball => {
       ball.setBounce(BALLS.BOUNCE.DEFAULT);
       ball.setInteractive();
+      ball.input.hitArea.setTo(BALLS.HIT_AREA.X, BALLS.HIT_AREA.Y, BALLS.HIT_AREA.WIDTH, BALLS.HIT_AREA.HEIGHT);
     });
     return balls;
   }
